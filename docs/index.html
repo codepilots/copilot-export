@@ -344,24 +344,25 @@
     <div class="install-grid">
 
       <!-- Option A: PowerShell one-liner -->
-      <div class="install-card recommended">
-        <div class="recommended-badge">Recommended</div>
+      <div class="install-card ">
         <h3>⚡ One-command install</h3>
-        <p>Paste this into PowerShell. Edge downloads and installs the extension automatically — no developer mode needed.</p>
+        <p>This method works if you have admin access to your Windows install. 
+          Paste this into PowerShell. Edge downloads and installs the extension automatically — no developer mode needed.</p>
         <div class="code-block" id="ps-cmd">
           irm 'https://codepilots.github.io/copilot-export/install.ps1' | iex
           <button class="copy-btn" onclick="copyCmd()">Copy</button>
         </div>
         <ol class="steps" style="margin-top: 20px;">
-          <li>Press <strong>Win + X</strong> → <em>Windows PowerShell</em></li>
+          <li>Press <strong>Win + X</strong> → <em>Terminal (admin)</em></li>
           <li>Paste the command above and press Enter</li>
           <li>If prompted, allow Edge to restart</li>
-          <li>Visit <strong>copilot.microsoft.com</strong> and click the extension icon</li>
+          <li>Visit <strong>m365.microsoft.com/chat</strong> and click the extension icon</li>
         </ol>
       </div>
 
       <!-- Option B: Manual sideload -->
-      <div class="install-card">
+      <div class="install-card recommended" >
+        <div class="recommended-badge">Recommended</div>
         <h3>🔧 Manual install</h3>
         <p>Download the source and load it yourself — ideal if you want to inspect or modify the code first.</p>
         <a class="btn btn-outline" style="margin-bottom: 20px; display: inline-flex;"
@@ -373,6 +374,7 @@
           <li>Open <strong>edge://extensions</strong> in Edge</li>
           <li>Enable <strong>Developer mode</strong> (top-right toggle)</li>
           <li>Click <strong>Load unpacked</strong> and select the unzipped folder</li>
+          <li>Visit <strong>m365.microsoft.com/chat</strong> and click the extension icon</li>
         </ol>
       </div>
 
