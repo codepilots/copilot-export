@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Copilot Chat Exporter — Edge Extension</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:   #0f6cbd;
+      --dark:   #1a1a2e;
+      --mid:    #4a4a6a;
+      --light:  #f4f7fb;
+      --border: #dde3ef;
+      --green:  #107c10;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color: var(--dark);
+      background: #fff;
+      line-height: 1.6;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Nav ──────────────────────────────────────── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 48px;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+      position: sticky; top: 0; z-index: 10;
+    }
+
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 15px; color: var(--dark);
+      text-decoration: none;
+    }
+
+    .nav-brand img { width: 28px; height: 28px; }
+
+    .nav-links { display: flex; gap: 28px; font-size: 14px; }
+    .nav-links a { color: var(--mid); }
+    .nav-links a:hover { color: var(--blue); text-decoration: none; }
+
+    /* ── Hero ─────────────────────────────────────── */
+    .hero {
+      text-align: center;
+      padding: 80px 24px 60px;
+      background: linear-gradient(160deg, #f0f6ff 0%, #fff 60%);
+    }
+
+    .hero-icon {
+      width: 80px; height: 80px;
+      border-radius: 20px;
+      box-shadow: 0 4px 24px rgba(15,108,189,.20);
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: 42px; font-weight: 800;
+      color: var(--dark); line-height: 1.15;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 span { color: var(--blue); }
+
+    .hero p {
+      font-size: 18px; color: var(--mid);
+      max-width: 560px; margin: 0 auto 36px;
+    }
+
+    .badge-row {
+      display: flex; justify-content: center; gap: 10px;
+      flex-wrap: wrap; margin-bottom: 40px;
+    }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 600; letter-spacing: .04em;
+      padding: 4px 10px; border-radius: 20px;
+    }
+
+    .badge-blue  { background: #dceeff; color: var(--blue); }
+    .badge-green { background: #dff0df; color: var(--green); }
+    .badge-gray  { background: #eee;    color: #555; }
+
+    /* ── Buttons ──────────────────────────────────── */
+    .btn-row {
+      display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 26px; border-radius: 8px;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      border: none; transition: transform .12s, box-shadow .12s;
+      text-decoration: none;
+    }
+
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.12); text-decoration: none; }
+
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-outline { background: #fff; color: var(--blue); border: 2px solid var(--blue); }
+
+    /* ── Install section ──────────────────────────── */
+    .section { padding: 72px 24px; }
+    .section-inner { max-width: 860px; margin: 0 auto; }
+    .section h2 {
+      font-size: 30px; font-weight: 800; margin-bottom: 8px;
+      text-align: center;
+    }
+    .section-sub {
+      text-align: center; color: var(--mid); margin-bottom: 48px; font-size: 16px;
+    }
+
+    .install-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 640px) { .install-grid { grid-template-columns: 1fr; } }
+
+    .install-card {
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      position: relative;
+    }
+
+    .install-card.recommended {
+      border-color: var(--blue);
+    }
+
+    .recommended-badge {
+      position: absolute; top: -12px; left: 20px;
+      background: var(--blue); color: #fff;
+      font-size: 11px; font-weight: 700; letter-spacing: .06em;
+      padding: 3px 10px; border-radius: 20px; text-transform: uppercase;
+    }
+
+    .install-card h3 { font-size: 17px; margin-bottom: 8px; }
+    .install-card p  { font-size: 14px; color: var(--mid); margin-bottom: 20px; }
+
+    .code-block {
+      background: #1a1a2e;
+      color: #7dd3fc;
+      font-family: "Cascadia Code", "Courier New", monospace;
+      font-size: 13px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      position: relative;
+      word-break: break-all;
+    }
+
+    .copy-btn {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(255,255,255,.12);
+      border: none; color: #ccc; border-radius: 5px;
+      padding: 4px 9px; font-size: 11px; cursor: pointer;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,.22); color: #fff; }
+
+    /* ── Steps ────────────────────────────────────── */
+    .steps { counter-reset: step; list-style: none; margin-top: 20px; }
+    .steps li {
+      display: flex; gap: 14px; align-items: flex-start;
+      margin-bottom: 18px; font-size: 14px; color: var(--dark);
+    }
+    .steps li::before {
+      counter-increment: step;
+      content: counter(step);
+      min-width: 26px; height: 26px;
+      background: var(--blue); color: #fff;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+    }
+
+    /* ── Features ─────────────────────────────────── */
+    .features-bg { background: var(--light); }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 20px;
+    }
+
+    .feature-icon {
+      font-size: 26px; margin-bottom: 10px;
+    }
+
+    .feature-card h3 { font-size: 15px; margin-bottom: 6px; }
+    .feature-card p  { font-size: 13px; color: var(--mid); }
+
+    /* ── Format pills ─────────────────────────────── */
+    .formats { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 28px; }
+    .format-pill {
+      background: #fff; border: 2px solid var(--border);
+      border-radius: 8px; padding: 8px 18px;
+      font-size: 14px; font-weight: 600; color: var(--dark);
+    }
+
+    /* ── Privacy notice ───────────────────────────── */
+    .privacy {
+      background: #fff8e6;
+      border: 1px solid #f0d080;
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      font-size: 13px;
+      color: #5a4800;
+      margin-top: 32px;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .privacy span { font-size: 20px; flex-shrink: 0; }
+
+    /* ── Footer ───────────────────────────────────── */
+    footer {
+      background: var(--dark); color: #aab;
+      text-align: center; padding: 32px 24px;
+      font-size: 13px;
+    }
+
+    footer a { color: #7dd3fc; }
+  </style>
+</head>
+<body>
+
+<!-- ── Nav ──────────────────────────────────────────────────────────────────── -->
+<nav>
+  <a class="nav-brand" href="#">
+    <img src="https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/copilot-chat-exporter/master/icons/icon32.png" alt="">
+    Copilot Chat Exporter
+  </a>
+  <div class="nav-links">
+    <a href="#install">Install</a>
+    <a href="#features">Features</a>
+    <a href="https://github.com/YOUR_GITHUB_USERNAME/copilot-chat-exporter">GitHub</a>
+  </div>
+</nav>
+
+<!-- ── Hero ─────────────────────────────────────────────────────────────────── -->
+<section class="hero">
+  <img class="hero-icon"
+       src="https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/copilot-chat-exporter/master/icons/icon128.png"
+       alt="Copilot Chat Exporter icon">
+
+  <h1>Export your <span>Copilot chats</span><br>in any format</h1>
+  <p>A free, open-source Microsoft Edge extension that saves complete M365 Copilot conversations — with images, citations, and rich formatting.</p>
+
+  <div class="badge-row">
+    <span class="badge badge-blue">Microsoft Edge</span>
+    <span class="badge badge-green">Free &amp; Open Source</span>
+    <span class="badge badge-gray">MIT License</span>
+    <span class="badge badge-gray">No account required</span>
+  </div>
+
+  <div class="btn-row">
+    <a class="btn btn-primary" href="#install">
+      ⬇ Install now
+    </a>
+    <a class="btn btn-outline" href="https://github.com/YOUR_GITHUB_USERNAME/copilot-chat-exporter">
+      View on GitHub
+    </a>
+  </div>
+</section>
+
+<!-- ── Format strip ──────────────────────────────────────────────────────────── -->
+<section class="section" style="padding: 40px 24px;">
+  <div class="section-inner" style="text-align: center;">
+    <p style="font-size:14px; color: var(--mid); margin-bottom: 14px; text-transform: uppercase; letter-spacing: .08em; font-weight: 600;">Export formats</p>
+    <div class="formats">
+      <div class="format-pill">📝 Markdown</div>
+      <div class="format-pill">📄 DOCX</div>
+      <div class="format-pill">🖨️ PDF</div>
+      <div class="format-pill">{ } JSON</div>
+      <div class="format-pill">📃 Plain text</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features ──────────────────────────────────────────────────────────────── -->
+<section class="section features-bg" id="features">
+  <div class="section-inner">
+    <h2>Everything you need</h2>
+    <p class="section-sub">Built for full-fidelity export — nothing gets left behind.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📜</div>
+        <h3>Full history</h3>
+        <p>Scrolls through long chats automatically, including lazy-loaded messages, so the entire conversation is captured.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎨</div>
+        <h3>Rich formatting</h3>
+        <p>Bold, italic, code blocks, headings, tables, and lists are preserved in DOCX and PDF — not stripped to plain text.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🖼️</div>
+        <h3>Inline images</h3>
+        <p>AI-generated images from Microsoft Designer appear exactly where they were in the conversation.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔗</div>
+        <h3>Citations</h3>
+        <p>Web references are exported as clickable hyperlinks in every format that supports them.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3>Fully local</h3>
+        <p>No data ever leaves your machine. Export happens entirely in your browser — no server, no account.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>No build step</h3>
+        <p>Pure vanilla JavaScript. The DOCX builder, ZIP assembler, and Open XML generator are all in-browser.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Install ────────────────────────────────────────────────────────────────── -->
+<section class="section" id="install">
+  <div class="section-inner">
+    <h2>Install the extension</h2>
+    <p class="section-sub">Choose the method that works best for you.</p>
+
+    <div class="install-grid">
+
+      <!-- Option A: PowerShell one-liner -->
+      <div class="install-card recommended">
+        <div class="recommended-badge">Recommended</div>
+        <h3>⚡ One-command install</h3>
+        <p>Paste this into PowerShell. Edge downloads and installs the extension automatically — no developer mode needed.</p>
+        <div class="code-block" id="ps-cmd">
+          irm 'https://YOUR_GITHUB_USERNAME.github.io/copilot-chat-exporter/install.ps1' | iex
+          <button class="copy-btn" onclick="copyCmd()">Copy</button>
+        </div>
+        <ol class="steps" style="margin-top: 20px;">
+          <li>Press <strong>Win + X</strong> → <em>Windows PowerShell</em></li>
+          <li>Paste the command above and press Enter</li>
+          <li>If prompted, allow Edge to restart</li>
+          <li>Visit <strong>copilot.microsoft.com</strong> and click the extension icon</li>
+        </ol>
+      </div>
+
+      <!-- Option B: Manual sideload -->
+      <div class="install-card">
+        <h3>🔧 Manual install</h3>
+        <p>Download the source and load it yourself — ideal if you want to inspect or modify the code first.</p>
+        <a class="btn btn-outline" style="margin-bottom: 20px; display: inline-flex;"
+           href="https://github.com/YOUR_GITHUB_USERNAME/copilot-chat-exporter/archive/refs/heads/master.zip">
+          ⬇ Download ZIP
+        </a>
+        <ol class="steps">
+          <li>Unzip the downloaded file</li>
+          <li>Open <strong>edge://extensions</strong> in Edge</li>
+          <li>Enable <strong>Developer mode</strong> (top-right toggle)</li>
+          <li>Click <strong>Load unpacked</strong> and select the unzipped folder</li>
+        </ol>
+      </div>
+
+    </div>
+
+    <div class="privacy">
+      <span>🔒</span>
+      <div>
+        <strong>Privacy:</strong> The extension only activates on Microsoft Copilot pages.
+        It reads your chat DOM to build the export file — everything stays on your device.
+        No analytics, no telemetry, no remote calls except fetching your own generated images (to embed them in exports).
+        Review the <a href="https://github.com/YOUR_GITHUB_USERNAME/copilot-chat-exporter">source code</a> any time.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ─────────────────────────────────────────────────────────────────── -->
+<footer>
+  <p>
+    <a href="https://github.com/YOUR_GITHUB_USERNAME/copilot-chat-exporter">GitHub</a> ·
+    <a href="https://github.com/YOUR_GITHUB_USERNAME/copilot-chat-exporter/blob/master/LICENSE">MIT License</a> ·
+    <a href="https://github.com/YOUR_GITHUB_USERNAME/copilot-chat-exporter/issues">Report an issue</a>
+  </p>
+  <p style="margin-top: 10px; font-size: 12px; color: #667;">
+    Not affiliated with Microsoft Corporation. "Copilot" and "Microsoft 365" are trademarks of Microsoft.
+  </p>
+</footer>
+
+<script>
+  function copyCmd() {
+    const text = document.getElementById('ps-cmd').childNodes[0].textContent.trim();
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+</script>
+</body>
+</html>
