@@ -42,11 +42,17 @@ if (-not (Test-Path $docsDir)) { New-Item -ItemType Directory $docsDir | Out-Nul
 
 function Join-Bytes {
     $ms = [System.IO.MemoryStream]::new()
-    foreach ($item in $args) {
-        if ($null -eq $item) { continue }
-        $a = if ($item -is [byte[]]) { $item } else { [byte[]]$item }
-        $ms.Write($a, 0, $a.Length)
+    function Append($x) {
+        if ($null -eq $x) { return }
+        if ($x -is [byte[]]) {
+            if ($x.Length -gt 0) { $ms.Write($x, 0, $x.Length) }
+        } elseif ($x -is [System.Collections.IEnumerable]) {
+            foreach ($child in $x) { Append $child }
+        } else {
+            $ms.WriteByte([byte]$x)
+        }
     }
+    foreach ($item in $args) { Append $item }
     return ,$ms.ToArray()
 }
 
@@ -73,11 +79,8 @@ function Write-ProtoField([int]$field, [byte[]]$data) {
 $rsa = [System.Security.Cryptography.RSA]::Create(2048)
 
 if (Test-Path $pemFile) {
-    $pem  = [System.IO.File]::ReadAllText($pemFile)
-    $b64  = ($pem -replace '-----[^-]+-----', '') -replace '\s', ''
-    $der  = [Convert]::FromBase64String($b64)
-    $read = 0
-    $rsa.ImportPkcs8PrivateKey([System.ReadOnlySpan[byte]]$der, [ref]$read)
+    $pem = [System.IO.File]::ReadAllText($pemFile)
+    $rsa.ImportFromPem($pem)
     Write-Host "Loaded existing key from edge-copilot.pem"
 } else {
     $privDer = $rsa.ExportPkcs8PrivateKey()
@@ -107,6 +110,7 @@ Write-Host "Extension ID: $extId" -ForegroundColor Green
 
 $zipMs = [System.IO.MemoryStream]::new()
 $zip   = [System.IO.Compression.ZipArchive]::new($zipMs, [System.IO.Compression.ZipArchiveMode]::Create, $true)
+$script:entryCount = 0
 
 $excludeNames = [System.Collections.Generic.HashSet[string]]@(
     'build.ps1','install.ps1','README.md','LICENSE','.gitignore','edge-copilot.pem'
@@ -126,13 +130,15 @@ Get-ChildItem -Path $root -Recurse -File | Where-Object {
     $fs.CopyTo($es)
     $fs.Dispose()
     $es.Dispose()
+    $script:entryCount++
 }
 
+$entryCount = $script:entryCount
 $zip.Dispose()
 $zipBytes = $zipMs.ToArray()
 $zipMs.Dispose()
 
-Write-Host "ZIP created ($([Math]::Round($zipBytes.Length/1KB, 1)) KB, $($zip.Entries.Count) entries)"
+Write-Host "ZIP created ($([Math]::Round($zipBytes.Length/1KB, 1)) KB, $entryCount entries)"
 
 # ── Build CRX3 ────────────────────────────────────────────────────────────────
 #
@@ -155,7 +161,7 @@ $sdLenLE  = [BitConverter]::GetBytes([uint32]$signedData.Length)
 $sigInput = Join-Bytes $prefix $sdLenLE $signedData
 
 $signature = $rsa.SignData(
-    [System.ReadOnlySpan[byte]]$sigInput,
+    [byte[]]$sigInput,
     [System.Security.Cryptography.HashAlgorithmName]::SHA256,
     [System.Security.Cryptography.RSASignaturePadding]::Pkcs1
 )

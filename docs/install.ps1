@@ -1,17 +1,9 @@
-# install.ps1 — One-command installer for Copilot Chat Exporter.
+﻿# install.ps1 — One-command installer for Copilot Chat Exporter.
 #
 # Usage (run in PowerShell as your normal user — no admin required):
-#   irm 'https://YOUR_GITHUB_USERNAME.github.io/copilot-chat-exporter/install.ps1' | iex
-#
-# What this does:
-#   1. Reads the extension ID and update URL from the hosted meta.json
-#   2. Adds a single registry key so Edge auto-downloads and installs the extension
-#   3. Restarts Edge (optional) — no developer mode required
+#   irm 'https://codepilots.github.io/copilot-export"Stop"
 
-Set-StrictMode -Version Latest
-$ErrorActionPreference = "Stop"
-
-$repoBase = "https://YOUR_GITHUB_USERNAME.github.io/copilot-chat-exporter"
+$repoBase = "https://codepilots.github.io/copilot-export"
 
 Write-Host ""
 Write-Host "  Copilot Chat Exporter — Installer" -ForegroundColor Cyan
