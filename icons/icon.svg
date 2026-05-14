@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="16" fill="#0f6cbd"/>
+  <!-- Stem -->
+  <rect x="55" y="22" width="18" height="44" rx="3" fill="#fff"/>
+  <!-- Arrow head -->
+  <polygon points="28,66 100,66 64,102" fill="#fff"/>
+  <!-- Underline bar -->
+  <rect x="28" y="108" width="72" height="10" rx="4" fill="#fff"/>
+</svg>

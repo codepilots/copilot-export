@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Export Copilot Chat</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="header">
+    <img src="icons/icon32.png" alt="" class="logo" />
+    <div>
+      <div class="title">Copilot Chat Exporter</div>
+      <div class="subtitle">Microsoft 365 / copilot.microsoft.com</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <label class="label">Export format</label>
+    <div class="format-group">
+      <label class="format-option">
+        <input type="radio" name="format" value="markdown" checked />
+        <span class="format-pill">Markdown</span>
+      </label>
+      <label class="format-option">
+        <input type="radio" name="format" value="json" />
+        <span class="format-pill">JSON</span>
+      </label>
+      <label class="format-option">
+        <input type="radio" name="format" value="text" />
+        <span class="format-pill">Plain text</span>
+      </label>
+      <label class="format-option">
+        <input type="radio" name="format" value="pdf" />
+        <span class="format-pill">PDF</span>
+      </label>
+      <label class="format-option">
+        <input type="radio" name="format" value="docx" />
+        <span class="format-pill">DOCX</span>
+      </label>
+    </div>
+  </div>
+
+  <button id="exportBtn" class="btn-export">
+    <span id="btnText">Export chat</span>
+    <span id="spinner" class="spinner hidden"></span>
+  </button>
+
+  <div id="status" class="status hidden"></div>
+
+  <div class="footer">
+    Navigate to a Copilot chat then click Export.
+  </div>
+
+  <script src="docx-builder.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
