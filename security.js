@@ -4,12 +4,14 @@
 const SECURITY_DEFAULTS = {
   // Hostnames from which images and files may be fetched during export.
   // Patterns may use a "*."-prefix wildcard, e.g. "*.sharepoint.com".
-  // Must stay aligned with host_permissions in manifest.json.
+  // Deliberately does NOT include a SharePoint wildcard: every tenant has its
+  // own <tenant>.sharepoint.com host, so a wildcard would allow credentialed
+  // fetches to arbitrary tenants. Users who export SharePoint-hosted images
+  // add their specific tenant host in the extension's Settings page.
   approvedImageHosts: [
     'copilot.microsoft.com',
     'm365.cloud.microsoft',
     'www.microsoft365.com',
-    '*.sharepoint.com',
     'teams.microsoft.com',
     'outlook.office.com',
     'outlook.office365.com',

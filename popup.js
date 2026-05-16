@@ -254,7 +254,7 @@ exportBtn.addEventListener('click', async () => {
         (dlResponse) => {
           if (dlResponse?.success) {
             const blockedNote = docxBlockedImages
-              ? ` — ${docxBlockedImages} image${docxBlockedImages !== 1 ? 's' : ''} skipped (not from an approved server)`
+              ? ` — ${docxBlockedImages} image${docxBlockedImages !== 1 ? 's' : ''} skipped (server not approved; add it in Settings)`
               : '';
             showStatus(docxBlockedImages ? 'error' : 'success',
               `Exported ${parts.join(', ')} → ${response.filename}${blockedNote}`);
@@ -286,7 +286,9 @@ exportBtn.addEventListener('click', async () => {
               chrome.runtime.sendMessage({ action: 'fetchImageAsBase64', url }, resolve)
             );
             if (result?.success) {
-              html = html.replace(`src="${url}"`, `src="${result.dataUrl}"`);
+              // Function replacement: treats the data URL literally so any
+              // `$` sequences in it are not interpreted as replacement patterns.
+              html = html.replace(`src="${url}"`, () => `src="${result.dataUrl}"`);
             } else if (result?.blocked) {
               pdfBlockedImages++;
             }
@@ -297,7 +299,7 @@ exportBtn.addEventListener('click', async () => {
       await chrome.storage.session.set({ copilotPrintHtml: html });
       await chrome.tabs.create({ url: chrome.runtime.getURL('print.html') });
       const pdfBlockedNote = pdfBlockedImages
-        ? ` — ${pdfBlockedImages} image${pdfBlockedImages !== 1 ? 's' : ''} skipped (not from an approved server)`
+        ? ` — ${pdfBlockedImages} image${pdfBlockedImages !== 1 ? 's' : ''} skipped (server not approved; add it in Settings)`
         : '';
       showStatus(pdfBlockedImages ? 'error' : 'success',
         `Print preview opened — ${parts.join(', ')}${pdfBlockedNote}`);
