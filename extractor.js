@@ -23,6 +23,54 @@
     return fiber?.memoizedProps || null;
   }
 
+  // ── Security helpers ─────────────────────────────────────────────────────────
+
+  // Returns true when a URL is safe to use in href/src attributes.
+  // Allows https, http, mailto, and relative references; blocks javascript:, data:, etc.
+  function isSafeHref(value) {
+    const v = (value || '').trim();
+    if (!v || v.startsWith('#') || v.startsWith('/') || v.startsWith('?') || v.startsWith('.')) return true;
+    try {
+      const { protocol } = new URL(v);
+      return protocol === 'https:' || protocol === 'http:' || protocol === 'mailto:';
+    } catch {
+      return !/^(javascript|data|vbscript):/i.test(v);
+    }
+  }
+
+  function sanitizeHref(url) {
+    return isSafeHref(url) ? url : '#';
+  }
+
+  // Strips dangerous tags and attributes from an HTML string before it is
+  // injected into the export document.  Removes script, style, iframe, svg,
+  // form elements and all event-handler / unsafe-scheme attributes.
+  function sanitizeHtml(htmlStr) {
+    if (!htmlStr) return '';
+    const REMOVE_TAGS = new Set([
+      'script', 'style', 'iframe', 'frame', 'frameset', 'object', 'embed',
+      'applet', 'link', 'base', 'meta', 'noscript', 'template',
+      'form', 'input', 'button', 'select', 'textarea', 'svg', 'math',
+    ]);
+    const parsed = new DOMParser().parseFromString(`<body>${htmlStr}</body>`, 'text/html');
+    function walkEl(el) {
+      [...el.children].forEach(walkEl);
+      if (REMOVE_TAGS.has(el.tagName.toLowerCase())) { el.remove(); return; }
+      const drop = [];
+      for (const { name } of el.attributes) {
+        const n = name.toLowerCase();
+        if (n.startsWith('on')) { drop.push(name); continue; }
+        if (['href', 'src', 'action', 'formaction', 'xlink:href'].includes(n)) {
+          if (!isSafeHref(el.getAttribute(name))) drop.push(name);
+        }
+        if (n === 'srcset' || n === 'xml:base') drop.push(name);
+      }
+      drop.forEach(a => el.removeAttribute(a));
+    }
+    walkEl(parsed.body);
+    return parsed.body.innerHTML;
+  }
+
   // ── Images ───────────────────────────────────────────────────────────────────
 
   function extractImages(contentEl) {
@@ -87,7 +135,7 @@
           const span = document.createElement('span');
           span.innerHTML = grouped.map(c =>
             c.url
-              ? `<a href="${c.url.replace(/"/g, '&quot;')}">${(c.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</a>`
+              ? `<a href="${sanitizeHref(c.url).replace(/"/g, '&quot;')}">${(c.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</a>`
               : (c.name || '')
           ).join(', ');
           cite.replaceWith(span);
@@ -153,7 +201,7 @@
       try {
         const grouped = JSON.parse(cite.getAttribute('data-grouped-citations') || '[]');
         cite.replaceWith(grouped.length
-          ? grouped.map(c => `[${c.name}](${c.url})`).join(', ')
+          ? grouped.map(c => `[${c.name}](${sanitizeHref(c.url)})`).join(', ')
           : '');
       } catch { cite.remove(); }
     });
@@ -268,7 +316,7 @@
       lines.push(msg.markdown || msg.text);
       if (msg.citations.length) {
         lines.push('');
-        lines.push('**Sources:** ' + msg.citations.map(c => `[${c.name}](${c.url})`).join(' · '));
+        lines.push('**Sources:** ' + msg.citations.map(c => `[${c.name}](${sanitizeHref(c.url)})`).join(' · '));
       }
       lines.push('');
     }
@@ -325,7 +373,7 @@
         }
         // Use rich HTML when available (preserves bold, code, headings, lists, etc.)
         if (seg.html) {
-          return `<div class="rich-content">${seg.html}</div>`;
+          return `<div class="rich-content">${sanitizeHtml(seg.html)}</div>`;
         }
         return (seg.text || '').split(/\n{2,}/).map(block => {
           const lines = block.split('\n').map(l => esc(l)).join('<br>');
@@ -357,7 +405,7 @@
       const cites = msg.citations.length
         ? `<div class="sources"><span class="sources-label">Sources:</span> ` +
           msg.citations.map(c =>
-            `<a href="${esc(c.url)}" target="_blank">${esc(c.name)}</a>`
+            `<a href="${esc(sanitizeHref(c.url))}" target="_blank">${esc(c.name)}</a>`
           ).join('<span class="sep"> · </span>') +
           `</div>`
         : '';
@@ -612,19 +660,6 @@
     <div class="meta">Exported ${esc(exportedAt)} · ${messages.length} messages</div>
     ${messagesHtml}
   </div>
-  <script>
-    // Wait for images to load before printing
-    window.addEventListener('load', () => {
-      const imgs = document.querySelectorAll('img');
-      if (!imgs.length) { setTimeout(() => window.print(), 300); return; }
-      let loaded = 0;
-      const tryPrint = () => { if (++loaded >= imgs.length) setTimeout(() => window.print(), 300); };
-      imgs.forEach(img => {
-        if (img.complete) tryPrint();
-        else { img.onload = tryPrint; img.onerror = tryPrint; }
-      });
-    });
-  </script>
 </body>
 </html>`;
   }
