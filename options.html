@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Copilot Exporter — Security Settings</title>
+  <link rel="stylesheet" href="popup.css" />
+  <style>
+    body { width: 460px; padding-bottom: 20px; }
+
+    textarea {
+      width: 100%;
+      font-family: "Cascadia Code", "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      padding: 8px 10px;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      resize: vertical;
+      min-height: 110px;
+      box-sizing: border-box;
+      background: #fff;
+      color: #1a1a2e;
+    }
+    textarea:focus { outline: 2px solid #0f6cbd; border-color: transparent; }
+
+    .help {
+      font-size: 11px;
+      color: #888;
+      margin-top: 5px;
+      line-height: 1.5;
+    }
+    .help code {
+      background: #f0f0f0;
+      border-radius: 3px;
+      padding: 0 3px;
+      font-family: "Cascadia Code", "Courier New", monospace;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin: 14px 16px 0;
+    }
+    .btn-save {
+      flex: 1;
+      background: #0f6cbd;
+      color: #fff;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-save:hover { background: #0c56a0; }
+
+    .btn-reset {
+      background: #fff;
+      border: 1.5px solid #c8c8c8;
+      padding: 9px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      color: #444;
+    }
+    .btn-reset:hover { border-color: #0f6cbd; color: #0f6cbd; }
+
+    #savedMsg {
+      margin: 10px 16px 0;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      background: #dff6dd;
+      color: #1e6b1e;
+      border: 1px solid #9fd89f;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="icons/icon32.png" alt="" class="logo" />
+    <div>
+      <div class="title">Security Settings</div>
+      <div class="subtitle">Copilot Chat Exporter</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <label class="label" for="imageHosts">Approved image &amp; file servers</label>
+    <textarea id="imageHosts" spellcheck="false"></textarea>
+    <p class="help">
+      One hostname per line. Use <code>*.example.com</code> to allow all subdomains.
+      Images and files are only downloaded from these servers during export.
+    </p>
+  </div>
+
+  <div class="section" style="margin-top:12px;">
+    <label class="label" for="tabHosts">Approved extension domains</label>
+    <textarea id="tabHosts" spellcheck="false"></textarea>
+    <p class="help">
+      One hostname per line. Export is blocked unless the active tab's hostname
+      matches one of these entries.
+    </p>
+  </div>
+
+  <div class="btn-row">
+    <button id="saveBtn" class="btn-save">Save settings</button>
+    <button id="resetBtn" class="btn-reset">Reset to defaults</button>
+  </div>
+
+  <div id="savedMsg">Settings saved.</div>
+
+  <script src="security.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>
