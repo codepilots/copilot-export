@@ -19,6 +19,11 @@ function getFormat() {
   return document.querySelector('input[name="format"]:checked')?.value || 'markdown';
 }
 
+document.getElementById('settingsLink').addEventListener('click', e => {
+  e.preventDefault();
+  chrome.runtime.openOptionsPage();
+});
+
 exportBtn.addEventListener('click', async () => {
   setLoading(true);
   statusEl.classList.add('hidden');
@@ -26,6 +31,21 @@ exportBtn.addEventListener('click', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id) {
     showStatus('error', 'Could not access the current tab.');
+    setLoading(false);
+    return;
+  }
+
+  // Verify the active tab is on an approved domain before proceeding.
+  const { approvedTabHosts } = await chrome.storage.sync.get({
+    approvedTabHosts: SECURITY_DEFAULTS.approvedTabHosts,
+  });
+  if (!isApprovedUrl(tab.url, approvedTabHosts)) {
+    let hostname = tab.url;
+    try { hostname = new URL(tab.url).hostname; } catch {}
+    showStatus('error',
+      `Export blocked: "${hostname}" is not an approved domain. ` +
+      `Open a Copilot chat on a supported Microsoft 365 site, or update the approved domains in Settings.`
+    );
     setLoading(false);
     return;
   }
@@ -192,6 +212,7 @@ exportBtn.addEventListener('click', async () => {
       )];
 
       const imageDataMap = {};
+      let docxBlockedImages = 0;
       if (imgUrls.length) {
         showStatus('success', `Fetching ${imgUrls.length} image${imgUrls.length !== 1 ? 's' : ''}…`);
         for (const url of imgUrls) {
@@ -205,6 +226,8 @@ exportBtn.addEventListener('click', async () => {
               const arr = new Uint8Array(bin.length);
               for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
               imageDataMap[url] = arr;
+            } else if (result?.blocked) {
+              docxBlockedImages++;
             }
           } catch {}
         }
@@ -230,7 +253,11 @@ exportBtn.addEventListener('click', async () => {
         },
         (dlResponse) => {
           if (dlResponse?.success) {
-            showStatus('success', `Exported ${parts.join(', ')} → ${response.filename}`);
+            const blockedNote = docxBlockedImages
+              ? ` — ${docxBlockedImages} image${docxBlockedImages !== 1 ? 's' : ''} skipped (server not approved; add it in Settings)`
+              : '';
+            showStatus(docxBlockedImages ? 'error' : 'success',
+              `Exported ${parts.join(', ')} → ${response.filename}${blockedNote}`);
           } else {
             showStatus('error', dlResponse?.error || 'Download failed.');
           }
@@ -248,16 +275,22 @@ exportBtn.addEventListener('click', async () => {
       const imgUrls = [...html.matchAll(imgPattern)].map(m => m[1])
         .filter(u => !u.startsWith('data:'));
 
+      let pdfBlockedImages = 0;
       if (imgUrls.length) {
         showStatus('success', `Fetching ${imgUrls.length} image${imgUrls.length !== 1 ? 's' : ''}…`);
-        // Fetch each image via the background service worker (has auth cookies)
+        // Fetch each image via the background service worker (has auth cookies).
+        // Only URLs from approved servers will be fetched; others are left as-is.
         for (const url of imgUrls) {
           try {
             const result = await new Promise(resolve =>
               chrome.runtime.sendMessage({ action: 'fetchImageAsBase64', url }, resolve)
             );
             if (result?.success) {
-              html = html.replace(`src="${url}"`, `src="${result.dataUrl}"`);
+              // Function replacement: treats the data URL literally so any
+              // `$` sequences in it are not interpreted as replacement patterns.
+              html = html.replace(`src="${url}"`, () => `src="${result.dataUrl}"`);
+            } else if (result?.blocked) {
+              pdfBlockedImages++;
             }
           } catch {}
         }
@@ -265,7 +298,11 @@ exportBtn.addEventListener('click', async () => {
 
       await chrome.storage.session.set({ copilotPrintHtml: html });
       await chrome.tabs.create({ url: chrome.runtime.getURL('print.html') });
-      showStatus('success', `Print preview opened — ${parts.join(', ')}`);
+      const pdfBlockedNote = pdfBlockedImages
+        ? ` — ${pdfBlockedImages} image${pdfBlockedImages !== 1 ? 's' : ''} skipped (server not approved; add it in Settings)`
+        : '';
+      showStatus(pdfBlockedImages ? 'error' : 'success',
+        `Print preview opened — ${parts.join(', ')}${pdfBlockedNote}`);
       return;
     }
 

@@ -223,9 +223,7 @@
     }
 
     function makeImage(url) {
-      const rel = imgRelMap.get(url);
-      if (!rel) return '';
-      const { dims } = rel;
+      const { dims } = imgRelMap.get(url);
       // 9525 EMU per pixel @ 96 DPI; max 6.5" wide = 5943600 EMU, 5" tall = 4572000 EMU
       const MAX_W = 5943600, MAX_H = 4572000;
       let cx, cy;

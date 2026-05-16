@@ -339,32 +339,15 @@
 <section class="section" id="install">
   <div class="section-inner">
     <h2>Install the extension</h2>
-    <p class="section-sub">Choose the method that works best for you.</p>
+    <p class="section-sub">Manual install only — no store listing, no auto-update, no remote installer.</p>
 
-    <div class="install-grid">
+    <div class="install-grid" style="grid-template-columns: 1fr; max-width: 520px; margin: 0 auto;">
 
-      <!-- Option A: PowerShell one-liner -->
-      <div class="install-card ">
-        <h3>⚡ One-command install</h3>
-        <p>This method works if you have admin access to your Windows install. 
-          Paste this into PowerShell. Edge downloads and installs the extension automatically — no developer mode needed.</p>
-        <div class="code-block" id="ps-cmd">
-          irm 'https://codepilots.github.io/copilot-export/install.ps1' | iex
-          <button class="copy-btn" onclick="copyCmd()">Copy</button>
-        </div>
-        <ol class="steps" style="margin-top: 20px;">
-          <li>Press <strong>Win + X</strong> → <em>Terminal (admin)</em></li>
-          <li>Paste the command above and press Enter</li>
-          <li>If prompted, allow Edge to restart</li>
-          <li>Visit <strong>m365.microsoft.com/chat</strong> and click the extension icon</li>
-        </ol>
-      </div>
-
-      <!-- Option B: Manual sideload -->
-      <div class="install-card recommended" >
-        <div class="recommended-badge">Recommended</div>
+      <!-- Manual sideload (only supported method) -->
+      <div class="install-card">
         <h3>🔧 Manual install</h3>
-        <p>Download the source and load it yourself — ideal if you want to inspect or modify the code first.</p>
+        <p>Download the source and load it yourself. You can inspect or modify the
+          code first — nothing runs on your machine until you load it.</p>
         <a class="btn btn-outline" style="margin-bottom: 20px; display: inline-flex;"
            href="https://github.com/codepilots/copilot-export/archive/refs/heads/master.zip">
           ⬇ Download ZIP
@@ -383,9 +366,10 @@
     <div class="privacy">
       <span>🔒</span>
       <div>
-        <strong>Privacy:</strong> The extension only activates on Microsoft Copilot pages.
+        <strong>Privacy &amp; security:</strong> The extension only activates on approved
+        Microsoft Copilot domains and only downloads images from approved Microsoft servers.
         It reads your chat DOM to build the export file — everything stays on your device.
-        No analytics, no telemetry, no remote calls except fetching your own generated images (to embed them in exports).
+        No analytics, no telemetry, no remote installer, no auto-update channel.
         Review the <a href="https://github.com/codepilots/copilot-export">source code</a> any time.
       </div>
     </div>
@@ -404,15 +388,5 @@
   </p>
 </footer>
 
-<script>
-  function copyCmd() {
-    const text = document.getElementById('ps-cmd').childNodes[0].textContent.trim();
-    navigator.clipboard.writeText(text).then(() => {
-      const btn = document.querySelector('.copy-btn');
-      btn.textContent = 'Copied!';
-      setTimeout(() => btn.textContent = 'Copy', 2000);
-    });
-  }
-</script>
 </body>
 </html>
