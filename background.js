@@ -10,11 +10,46 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
+// MIME types this extension is allowed to write to disk — one per export format.
+const ALLOWED_DOWNLOAD_MIME = new Set([
+  'text/markdown',
+  'application/json',
+  'text/plain',
+  'text/html',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]);
+
+// A safe, single-segment relative filename: word chars, dot, dash, space only.
+// Rejects path separators, traversal, control chars and absolute paths.
+function isSafeDownloadFilename(name) {
+  return typeof name === 'string' &&
+    name.length > 0 && name.length <= 200 &&
+    /^[A-Za-z0-9._ -]+$/.test(name) &&
+    !name.includes('..');
+}
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+
+  // ── Sender authentication ──────────────────────────────────────────────────
+  // Only accept messages originating from this extension's own pages
+  // (popup / options). Rejects content scripts, web pages and other extensions.
+  const fromOwnPage = sender.id === chrome.runtime.id &&
+    typeof sender.url === 'string' &&
+    sender.url.startsWith(`chrome-extension://${chrome.runtime.id}/`);
+  if (!fromOwnPage) {
+    sendResponse({ success: false, error: 'Unauthorized sender.' });
+    return;
+  }
 
   // ── File download ──────────────────────────────────────────────────────────
   if (request.action === 'download') {
     const { content, filename, mimeType, isBase64 } = request;
+    if (typeof content !== 'string' ||
+        !ALLOWED_DOWNLOAD_MIME.has(mimeType) ||
+        !isSafeDownloadFilename(filename)) {
+      sendResponse({ success: false, error: 'Invalid download request.' });
+      return;
+    }
     const b64 = isBase64 ? content : btoa(unescape(encodeURIComponent(content)));
     const dataUrl = `data:${mimeType};base64,${b64}`;
     chrome.downloads.download({ url: dataUrl, filename, saveAs: false }, (downloadId) => {
