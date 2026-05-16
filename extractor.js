@@ -28,6 +28,10 @@
   // Allows https, http, mailto, and relative references; blocks javascript:, data:, etc.
   function isSafeHref(value) {
     const v = (value || '').trim();
+    // Protocol-relative ("//host/…") resolves to an external origin, so it is
+    // not treated as a safe same-document relative reference. Copilot content
+    // uses absolute https URLs, so this drops nothing legitimate.
+    if (v.startsWith('//')) return false;
     if (!v || v.startsWith('#') || v.startsWith('/') || v.startsWith('?') || v.startsWith('.')) return true;
     try {
       const { protocol } = new URL(v);

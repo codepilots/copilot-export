@@ -8,13 +8,38 @@ function hostsToText(arr) {
   return (arr || []).join('\n');
 }
 
-function textToHosts(txt) {
-  return txt.split('\n').map(l => l.trim()).filter(Boolean);
+function partitionHosts(txt) {
+  const valid = [], invalid = [];
+  for (const line of txt.split('\n')) {
+    const h = line.trim();
+    if (!h) continue;
+    (secValidateHostPattern(h) ? valid : invalid).push(h);
+  }
+  return { valid, invalid };
 }
 
 function flashSaved() {
+  savedMsg.textContent = 'Settings saved.';
+  savedMsg.style.background = '';
+  savedMsg.style.color = '';
+  savedMsg.style.borderColor = '';
   savedMsg.style.display = 'block';
-  setTimeout(() => { savedMsg.style.display = 'none'; }, 2000);
+  clearTimeout(flashSaved._t);
+  flashSaved._t = setTimeout(() => { savedMsg.style.display = 'none'; }, 2000);
+}
+
+function warnRejected(rejected) {
+  const plural = rejected.length === 1 ? 'entry' : 'entries';
+  savedMsg.textContent =
+    `Saved. Ignored ${rejected.length} invalid or too-broad ${plural}: ` +
+    `${rejected.join(', ')} — use a specific host (contoso.sharepoint.com) ` +
+    `or a wildcard with at least two labels (*.sharepoint.com).`;
+  savedMsg.style.background = '#fff4ce';
+  savedMsg.style.color = '#6b5b00';
+  savedMsg.style.borderColor = '#e8d57e';
+  savedMsg.style.display = 'block';
+  clearTimeout(flashSaved._t);
+  flashSaved._t = setTimeout(() => { savedMsg.style.display = 'none'; }, 8000);
 }
 
 async function load() {
@@ -27,11 +52,18 @@ async function load() {
 }
 
 saveBtn.addEventListener('click', async () => {
+  const img = partitionHosts(imageHostsEl.value);
+  const tab = partitionHosts(tabHostsEl.value);
   await chrome.storage.sync.set({
-    approvedImageHosts: textToHosts(imageHostsEl.value),
-    approvedTabHosts:   textToHosts(tabHostsEl.value),
+    approvedImageHosts: img.valid,
+    approvedTabHosts:   tab.valid,
   });
-  flashSaved();
+  // Reflect the cleaned lists back so the user sees exactly what was stored.
+  imageHostsEl.value = img.valid.join('\n');
+  tabHostsEl.value   = tab.valid.join('\n');
+  const rejected = [...img.invalid, ...tab.invalid];
+  if (rejected.length) warnRejected(rejected);
+  else flashSaved();
 });
 
 resetBtn.addEventListener('click', async () => {

@@ -43,6 +43,19 @@ function secMatchesHost(pattern, hostname) {
   return hostname === pattern;
 }
 
+// Returns true when `pattern` is specific enough to safely allow credentialed
+// fetches / extension execution. Rejects overly-broad patterns: a pattern must
+// resolve to at least two DNS labels, and a "*."-wildcard's fixed part must
+// itself have at least two labels — so "*.sharepoint.com" is accepted but
+// "*.com" (every .com host) and a bare "*" are not.
+function secValidateHostPattern(pattern) {
+  pattern = (pattern || '').toLowerCase().trim();
+  if (!pattern) return false;
+  const host = pattern.startsWith('*.') ? pattern.slice(2) : pattern;
+  const LABEL = '[a-z0-9](?:[a-z0-9-]*[a-z0-9])?';
+  return new RegExp(`^${LABEL}(?:\\.${LABEL})+$`).test(host);
+}
+
 // Returns true when `url` is an https:// URL whose hostname matches at least
 // one entry in `patterns`.  Returns false for any other scheme or a bad URL.
 function isApprovedUrl(url, patterns) {
