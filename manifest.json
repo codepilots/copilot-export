@@ -17,21 +17,6 @@
       "32": "icons/icon32.png"
     }
   },
-  "content_scripts": [
-    {
-      "matches": [
-        "https://copilot.microsoft.com/*",
-        "https://m365.cloud.microsoft/*",
-        "https://www.microsoft365.com/*",
-        "https://*.sharepoint.com/*",
-        "https://teams.microsoft.com/*",
-        "https://outlook.office.com/*",
-        "https://outlook.office365.com/*"
-      ],
-      "js": ["content.js"],
-      "run_at": "document_idle"
-    }
-  ],
   "background": {
     "service_worker": "background.js"
   },

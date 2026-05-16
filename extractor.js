@@ -4,13 +4,12 @@
 
 (() => {
   const SEL = {
-    userContent:   '.fai-UserMessage__message',
-    botContent:    '.fai-CopilotMessage__content',
-    userTurn:      '.fai-UserMessage',
-    botTurn:       '.fai-CopilotMessage',
-    chatContainer: '.fai-CopilotChat',
-    citation:      '.fai-Citation',
-    designerHost:  '[id^="designer-host"]',
+    userContent:  '.fai-UserMessage__message',
+    botContent:   '.fai-CopilotMessage__content',
+    userTurn:     '.fai-UserMessage',
+    botTurn:      '.fai-CopilotMessage',
+    citation:     '.fai-Citation',
+    designerHost: '[id^="designer-host"]',
   };
 
   // ── React fiber ──────────────────────────────────────────────────────────────
@@ -364,7 +363,7 @@
     const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
     function renderSegments(segments) {
-      return (segments || []).map(seg => {
+      return segments.map(seg => {
         if (seg.type === 'image') {
           return `<figure class="gen-image">
             <img src="${esc(seg.url)}" alt="${esc(seg.prompt)}" loading="lazy">
@@ -387,19 +386,7 @@
       const ts = msg.timestamp
         ? `<span class="ts">${new Date(msg.timestamp).toLocaleString()}</span>` : '';
 
-      // Use segments for correct inline image positioning; fall back to text-then-images
-      const body = msg.segments && msg.segments.length
-        ? renderSegments(msg.segments)
-        : msg.text.split(/\n{2,}/).map(block => {
-            const lines = block.split('\n').map(l => esc(l)).join('<br>');
-            return `<p>${lines}</p>`;
-          }).join('') +
-          msg.images.map(img =>
-            `<figure class="gen-image">
-              <img src="${esc(img.url)}" alt="${esc(img.prompt)}" loading="lazy">
-              <figcaption>${esc(img.prompt)}</figcaption>
-            </figure>`
-          ).join('');
+      const body = renderSegments(msg.segments);
 
       // Citations
       const cites = msg.citations.length
@@ -706,7 +693,7 @@
   let messages = gatherMessages();
 
   if (window.__copilotExtractCache && window.__copilotExtractCache.length > 0) {
-    const cacheKeyMap = window.__copilotExtractCacheKeys || new Map();
+    const cacheKeyMap = window.__copilotExtractCacheKeys;
     const result = [...window.__copilotExtractCache];
     for (const msg of messages) {
       const key = makeCacheKey(msg);
