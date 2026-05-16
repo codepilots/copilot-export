@@ -19,10 +19,30 @@ function getFormat() {
   return document.querySelector('input[name="format"]:checked')?.value || 'markdown';
 }
 
-document.getElementById('settingsLink').addEventListener('click', e => {
-  e.preventDefault();
-  chrome.runtime.openOptionsPage();
-});
+document.querySelectorAll('.js-settings').forEach(link =>
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    chrome.runtime.openOptionsPage();
+  })
+);
+
+// On open, decide whether this tab is exportable and show the matching view.
+// (When the popup is open, activeTab grants the current tab's URL even
+// without the "tabs" permission.)
+(async () => {
+  const mainView = document.getElementById('mainView');
+  const unavailableView = document.getElementById('unavailableView');
+  let available = false;
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const { approvedTabHosts } = await chrome.storage.sync.get({
+      approvedTabHosts: SECURITY_DEFAULTS.approvedTabHosts,
+    });
+    available = !!tab?.url && isApprovedUrl(tab.url, approvedTabHosts);
+  } catch {}
+  mainView.classList.toggle('hidden', !available);
+  unavailableView.classList.toggle('hidden', available);
+})();
 
 exportBtn.addEventListener('click', async () => {
   setLoading(true);

@@ -15,42 +15,55 @@
     </div>
   </div>
 
-  <div class="section">
-    <label class="label">Export format</label>
-    <div class="format-group">
-      <label class="format-option">
-        <input type="radio" name="format" value="markdown" checked />
-        <span class="format-pill">Markdown</span>
-      </label>
-      <label class="format-option">
-        <input type="radio" name="format" value="json" />
-        <span class="format-pill">JSON</span>
-      </label>
-      <label class="format-option">
-        <input type="radio" name="format" value="text" />
-        <span class="format-pill">Plain text</span>
-      </label>
-      <label class="format-option">
-        <input type="radio" name="format" value="pdf" />
-        <span class="format-pill">PDF</span>
-      </label>
-      <label class="format-option">
-        <input type="radio" name="format" value="docx" />
-        <span class="format-pill">DOCX</span>
-      </label>
+  <div id="mainView">
+    <div class="section">
+      <label class="label">Export format</label>
+      <div class="format-group">
+        <label class="format-option">
+          <input type="radio" name="format" value="markdown" checked />
+          <span class="format-pill">Markdown</span>
+        </label>
+        <label class="format-option">
+          <input type="radio" name="format" value="json" />
+          <span class="format-pill">JSON</span>
+        </label>
+        <label class="format-option">
+          <input type="radio" name="format" value="text" />
+          <span class="format-pill">Plain text</span>
+        </label>
+        <label class="format-option">
+          <input type="radio" name="format" value="pdf" />
+          <span class="format-pill">PDF</span>
+        </label>
+        <label class="format-option">
+          <input type="radio" name="format" value="docx" />
+          <span class="format-pill">DOCX</span>
+        </label>
+      </div>
+    </div>
+
+    <button id="exportBtn" class="btn-export">
+      <span id="btnText">Export chat</span>
+      <span id="spinner" class="spinner hidden"></span>
+    </button>
+
+    <div id="status" class="status hidden"></div>
+
+    <div class="footer">
+      Navigate to a Copilot chat then click Export. &middot;
+      <a href="#" class="js-settings" style="color:#0f6cbd;text-decoration:none;">Settings</a>
     </div>
   </div>
 
-  <button id="exportBtn" class="btn-export">
-    <span id="btnText">Export chat</span>
-    <span id="spinner" class="spinner hidden"></span>
-  </button>
-
-  <div id="status" class="status hidden"></div>
-
-  <div class="footer">
-    Navigate to a Copilot chat then click Export. &middot;
-    <a href="#" id="settingsLink" style="color:#0f6cbd;text-decoration:none;">Settings</a>
+  <div id="unavailableView" class="section unavail hidden">
+    <p class="unavail-msg">
+      This page isn't a supported Microsoft&nbsp;365 / Copilot site, so
+      there's nothing to export here.
+    </p>
+    <p class="unavail-hint">
+      Open a Copilot chat on a supported site, or adjust the approved
+      domains in <a href="#" class="js-settings">Settings</a>.
+    </p>
   </div>
 
   <script src="security.js"></script>
