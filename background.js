@@ -100,3 +100,53 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
 });
+
+// ── Toolbar state: reflect whether the active tab is exportable ──────────────
+// A muted badge + tooltip marks tabs where export won't run. No "tabs"
+// permission: tab.url is populated for approved hosts via host_permissions,
+// and absent (→ treated as unavailable) for everything else.
+
+function applyActionState(tabId, url) {
+  chrome.storage.sync.get(
+    { approvedTabHosts: SECURITY_DEFAULTS.approvedTabHosts },
+    ({ approvedTabHosts }) => {
+      const available = !!url && isApprovedUrl(url, approvedTabHosts);
+      chrome.action.setBadgeText({ tabId, text: available ? '' : '!' });
+      chrome.action.setTitle({
+        tabId,
+        title: available
+          ? 'Export Copilot Chat'
+          : 'Copilot Chat Exporter — not available on this page',
+      });
+    }
+  );
+}
+
+function refreshTab(tabId) {
+  chrome.tabs.get(tabId, tab => {
+    if (chrome.runtime.lastError || !tab) return;
+    applyActionState(tabId, tab.url);
+  });
+}
+
+function refreshActiveTabs() {
+  chrome.action.setBadgeBackgroundColor({ color: '#9aa0a6' });
+  chrome.tabs.query({ active: true }, tabs => {
+    for (const t of tabs) if (t.id != null) applyActionState(t.id, t.url);
+  });
+}
+
+chrome.tabs.onActivated.addListener(({ tabId }) => refreshTab(tabId));
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' || changeInfo.url) {
+    applyActionState(tabId, tab.url);
+  }
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'sync' && changes.approvedTabHosts) refreshActiveTabs();
+});
+
+chrome.runtime.onStartup.addListener(refreshActiveTabs);
+chrome.runtime.onInstalled.addListener(refreshActiveTabs);
